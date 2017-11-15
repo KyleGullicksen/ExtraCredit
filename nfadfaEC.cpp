@@ -26,6 +26,7 @@ unordered_set<char> alphas;
 int maxState;  // the highest state indicated in nfa.txt first line
 vector<string> DFA;
 
+
 // ----- utility functions ----------------------------------------
 string makeCompositeState(vector<int> & states)
 {
@@ -115,18 +116,37 @@ int main()
 //    addNewState("0");  // start with state 0
 
     //Starting at our start state
-    queue<vector<int>> stateQueue;
+    queue<vector<int>> newStates;
+
     vector<int> startingState;
     startingState.push_back(nfa.getStartState());
-    stateQueue.push(startingState);
+    newStates.push(startingState);
+
     unordered_set<string> seenStates;
     vector<int> currentState;
 
-    while(!stateQueue.empty())
-    {
-        currentState = stateQueue.front();
-        stateQueue.pop();
+    vector<int> * destinationStates;
+    string currentCompositeState = "";
 
+    while(!newStates.empty())
+    {
+        currentState = newStates.front();
+        newStates.pop();
+
+        for(int state : currentState)
+        {
+            //Get all of the transitions for this state
+            for(char ch : alphas)
+            {
+                destinationStates = nfa.getTransitions(state, ch);
+
+                //was there any transitions?
+                if(destinationStates == nullptr)
+                    continue;
+
+                currentCompositeState = makeCompositeState(*destinationStates);
+            }
+        }
     }
 
     while(x < DFA.size()) // for each DFA state
