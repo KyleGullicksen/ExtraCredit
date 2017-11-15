@@ -34,9 +34,7 @@ void TransitionTable::populate(vector<Transition>& transitions)
 
     //Populate the table from the given transitions
     for(Transition transition : transitions)
-        for(char transitionChar : transition.transitionChars)
-            for(int targetState : transition.targetStates)
-                table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
+        addTransition(transition);
 }
 
 int TransitionTable::getIndex(char transitionChar)
@@ -69,4 +67,11 @@ int TransitionTable::getStartState()
         return -1;
 
     return 0;
+}
+
+void TransitionTable::addTransition(Transition &transition)
+{
+    for(char transitionChar : transition.transitionChars)
+        for(int targetState : transition.targetStates)
+            table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
 }

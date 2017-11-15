@@ -29,6 +29,7 @@ public:
     void populate(vector<Transition> & transitions);
     vector<int> getSourceStates();
     int getStartState();
+    void addTransition(Transition & transition);
 };
 
 #endif //EXTRACREDIT_TRANSITIONTABLE_H

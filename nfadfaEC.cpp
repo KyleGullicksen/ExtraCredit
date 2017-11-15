@@ -22,6 +22,7 @@ ofstream fout("dfa.txt", ios::out);
 
 //vector<int> NFA[10][5];
 TransitionTable nfa;
+TransitionTable dfa;
 unordered_set<char> alphas;
 int maxState;  // the highest state indicated in nfa.txt first line
 vector<string> DFA;
@@ -104,6 +105,22 @@ void addNewState(string state)
     //NOPE NOT USING THIS
 }
 
+vector<int> & reduce(vector<int> & transitions, vector<int> & results)
+{
+    unordered_set<int> uniqueTransitions;
+
+    for(int state : transitions)
+    {
+        if(uniqueTransitions.find(state) != uniqueTransitions.end())
+            continue;
+
+        uniqueTransitions.insert(state);
+        results.push_back(state);
+    }
+
+    return results;
+}
+
 // Main Driver
 int main()
 {
@@ -112,42 +129,56 @@ int main()
     cout << "Arrow labels can be anything from a .. e" << endl << endl;
     buildnfa();
 
-//    // add new states to DFA
-//    addNewState("0");  // start with state 0
+    queue<vector<int>> newCompositeStates;
+    vector<int> * nfaTransitions;
+    vector<int> currentCompositeState;
+    vector<int> transitions;
+    vector<int> newCompositeState;
+    unordered_set<string> seenStates;
+    string compositeStateStr = "";
+    Transition newDFATransition;
 
-    //Starting at our start state
-    queue<vector<int>> newStates;
-
+    //Add the starting state
     vector<int> startingState;
     startingState.push_back(nfa.getStartState());
-    newStates.push(startingState);
+    newCompositeStates.push(startingState);
 
-    unordered_set<string> seenStates;
-    vector<int> currentState;
-
-    vector<int> * destinationStates;
-    string currentCompositeState = "";
-
-    while(!newStates.empty())
+    while(!newCompositeStates.empty())
     {
-        currentState = newStates.front();
-        newStates.pop();
+        currentCompositeState = newCompositeStates.front();
+        newCompositeStates.pop();
 
-        for(int state : currentState)
+        for(char alpha : alphas)
         {
-            //Get all of the transitions for this state
-            for(char ch : alphas)
-            {
-                destinationStates = nfa.getTransitions(state, ch);
+            transitions.clear();
+            newCompositeState.clear();
 
-                //was there any transitions?
-                if(destinationStates == nullptr)
+            for(int currentState : currentCompositeState)
+            {
+                nfaTransitions = nfa.getTransitions(currentState, alpha);
+
+                if(nfaTransitions == nullptr)
                     continue;
 
-                currentCompositeState = makeCompositeState(*destinationStates);
+                transitions.insert(transitions.end(), nfaTransitions->begin(), nfaTransitions->end());
             }
+
+            reduce(transitions, newCompositeState);
+
+            compositeStateStr = makeCompositeState(newCompositeState);
+
+            if(seenStates.find(compositeStateStr) != seenStates.end())
+                continue;
+
+            newCompositeStates.push(newCompositeState);
+
+            //Add a new transition to the DFA [might need to refactor the Transition class]
+            //newDFATransition.
         }
+
+
     }
+
 
     while(x < DFA.size()) // for each DFA state
     {
