@@ -52,6 +52,7 @@ void alphabet(vector<Transition> & transitions)
 
 //Format: 0 a 0 1 -1
 
+
 void buildnfa()
 {
     ifstream fin("nfa.txt", ios::in);
@@ -126,7 +127,6 @@ int main()
         currentState = stateQueue.front();
         stateQueue.pop();
 
-        for()
     }
 
     while(x < DFA.size()) // for each DFA state
