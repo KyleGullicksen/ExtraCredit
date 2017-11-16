@@ -5,6 +5,8 @@
 #ifndef EXTRACREDIT_TRANSITIONTABLE_H
 #define EXTRACREDIT_TRANSITIONTABLE_H
 
+#define EPSILON -2
+
 #include <vector>
 #include <string>
 #include <fstream>
@@ -23,13 +25,16 @@ protected:
     int getIndex(char transitionChar);
 public:
     TransitionTable() = default;
+    TransitionTable(Transition transition);
+    TransitionTable(int sourceState, char transitionChar, int endState);
     explicit TransitionTable(vector<Transition> & transitions);
     vector<int> * getTransitions(int sourceState, char transitionChar);
     int size();
     void populate(vector<Transition> & transitions);
     vector<int> getSourceStates();
-    int getStartState();
-    void addTransition(Transition & transition);
+    int getStartStateNumber();
+    Transition getLastState();
+    void add(Transition& transition);
 };
 
 #endif //EXTRACREDIT_TRANSITIONTABLE_H

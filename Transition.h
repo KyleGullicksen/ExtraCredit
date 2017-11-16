@@ -21,6 +21,11 @@ public:
     Transition(int sourceState, const string & transitionChars, int targetState);
 
     void setTransitions(string transitionsString);
+    virtual void set(int sourceState, int targetState);
+    virtual void set(int sourceState, char transitionChar, int targetState);
+    virtual void set(int sourceState, const vector<char>& transitionChars, int targetState);
+    int getTopTargetState();
+    char getTopTransitionChar();
 };
 
 #endif //EXTRACREDIT_TRANSITION_H

@@ -18,7 +18,7 @@ using Utilities::split;
 // States allowed are 0 through 9
 // Arrows allowed are a through e
 
-ofstream fout("dfa.txt", ios::out);
+ofstream fout("dfa.txt", ios::out);arrow
 
 //vector<int> NFA[10][5];
 TransitionTable nfa;
