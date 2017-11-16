@@ -71,6 +71,20 @@ int TransitionTable::getStartStateNumber()
 
 void TransitionTable::add(Transition& transition)
 {
+    if(transition.sourceState < table.size())
+    {
+        table.resize(transition.sourceState + 1);
+
+        //Init the new entires in the table
+
+        for(int index = transition.sourceState - table.size(); index < (transition.sourceState + 2); ++index)
+        {
+            //Do stuff
+        }
+    }
+
+
+    //Add the transiton to the table
     for(char transitionChar : transition.transitionChars)
         for(int targetState : transition.targetStates)
             table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
@@ -90,5 +104,8 @@ TransitionTable::TransitionTable(Transition transition)
 
 Transition TransitionTable::getLastState()
 {
-    
+    vector<vector<int>> transitionCharsAndTargets = table[table.size() - 1];
+
+    Transition lastTransition;
+    lastTransition.set(table.size() - 1, transitionCharsAndTargets)
 }
