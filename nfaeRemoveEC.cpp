@@ -5,6 +5,7 @@
 #include "TransitionTable.h"
 #include "Transition.h"
 #include <unordered_set>
+#include <unordered_map>
 #include "Utilities.h"
 
 using namespace std;
@@ -13,7 +14,6 @@ using namespace std;
 
 TransitionTable nfa;
 int maxState;
-unordered_set<char> alphas;
 
 // ----- put utility functions here ----------------------------------------
 
@@ -53,53 +53,19 @@ void buildnfa()
     nfa.populate(transitions);
 }
 
-/*
- * If c is the goal
-        Exit
-    Else
-        Mark c "Visit In Progress"
-        Foreach neighbor n of c
-            If n "Unvisited"
-                Depth-First-Search( n )
-        Mark c "Visited"
- */
 
-
-vector<int> & addAllEpsilonAndTargetTransitions(int currentStateNumber, char targetTransitionChar, vector<int> & results)
+vector<int> & addTransitionsFromMatchingTargetChar(int currentState, char targetChar, vector<int>& results)
 {
-    //Add the current state
-    results.push_back(currentStateNumber);
-
-    //get the target transitions
-    vector<int> * targetTransitions = nfa.getTransitions(currentStateNumber, targetTransitionChar);
+    vector<int> * targetTransitions = nfa.getTransitions(currentState, targetChar);
 
     if(targetTransitions != nullptr)
         for(int stateNumber : *targetTransitions)
-            addAllEpsilonAndTargetTransitions(stateNumber, targetTransitionChar, results);
+        {
+            results.push_back(stateNumber);
+            addTransitionsFromMatchingTargetChar(stateNumber, EPSILON, results);
+        }
 
-    //Get all epsilon transitions
-    vector<int> * epsilonTransitions = nfa.getTransitions(currentStateNumber, EPSILON);
-
-    if(epsilonTransitions != nullptr)
-        for(int stateNumber: * epsilonTransitions)
-            addAllEpsilonAndTargetTransitions(stateNumber, targetTransitionChar, results);
-}
-
-vector<int> & removeEpsilons(int currentStateNumber, char targetTransitionChar, vector<int> & results)
-{
-    vector<int> * targetTransitions = nfa.getTransitions(currentStateNumber, targetTransitionChar);
-
-    if(targetTransitions != nullptr)
-        for(int stateNumber : *targetTransitions)
-            addAllEpsilonAndTargetTransitions(currentStateNumber, targetTransitionChar, results);
-
-    //Get all the epsilon transitions for the current state
-    vector<int> * epsilonTransitions = nfa.getTransitions(currentStateNumber, EPSILON);
-
-    if(epsilonTransitions != nullptr)
-        for(int stateNumber : *epsilonTransitions)
-            removeEpsilons(stateNumber, targetTransitionChar, results);
-
+    return results;
 }
 
 int main()
@@ -107,48 +73,42 @@ int main()
     char a;
     buildnfa();
 
-    // for each state-char pair of NFA1, compute e*chare* to add to NFA2
-    vector<int> results;
-    vector<Transition> nfaWithoutEpsilonTransitions;
-    Transition transition;
+    unordered_set<char> alphas;
+    vector<vector<int>> epsilonTransitions;
+    vector<int> currentEpsilonTransitions;
+    epsilonTransitions.resize(maxState);
+    vector<int> * epsilonTransitonsForCurrentState;
 
+    //TODO: Get all the alphas
+
+    //Get the epsilon transitions for all of them
     for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
     {
-        results.clear();
-
-        for(char alpha : alphas)
-            removeEpsilons(stateNumber, alpha, results);
-
-        //Make transitions
-        for(int result : results)
-        {
-            transition.set(stateNumber, result);
-            nfaWithoutEpsilonTransitions.push_back(transition);
-        }
+        currentEpsilonTransitions.clear();
+        addTransitionsFromMatchingTargetChar(stateNumber, EPSILON, currentEpsilonTransitions);
+        epsilonTransitions.push_back(currentEpsilonTransitions);
     }
 
-    TransitionTable nfaWithoutEpsilon(nfaWithoutEpsilonTransitions);
 
+    //Calculate e*<target transition> e* for all states...
 
-    cout << "All the states reachable using only e's" << endl;
-    for(int s = 0; s <= maxState; s++)
+    vector<Transition> nfaWithEpsilonTransitions;
+    Transition transition;
+    vector<int> * currentEpsilonTransitionState = nullptr;
+    vector<int> results;
+
+    for(int stateNumber = 0; stateNumber < maxState; stateNumber++)
     {
-        // from s, find all the states rechable using only e's
-        // These are the Eends
-    }
-    cout << "Computing e* c e* for each state-c pair.. " << endl;
-    for(int s = 0; s < maxState; s++)
-        for(int ci = 0; ci < 4; ci++)
+        for(char currentTransitionChar : alphas)
         {
-            // get direct on ci destinations
+            currentEpsilonTransitionState = &epsilonTransitions[stateNumber];
 
-            // add on (Eend, ci) destinations
-
-            // add on all destinations' Eends
-
-            // send the result for (s, ci) pair to output file
+            for(int epsilonState : *currentEpsilonTransitionState)
+                addTransitionsFromMatchingTargetChar(epsilonState, currentTransitionChar, results);
         }
-    cout << "Sent NFA to nfa.txt .... " << endl;
+    }
+
+    //TODO: Export the results to a text document
 }
 
  
