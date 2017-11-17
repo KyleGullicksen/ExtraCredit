@@ -1,11 +1,8 @@
 #include<iostream>
 #include<fstream>
 #include<vector>
-#include<string>
 #include "TransitionTable.h"
-#include "Transition.h"
 #include <unordered_set>
-#include <unordered_map>
 #include "Utilities.h"
 
 using namespace std;
@@ -13,6 +10,7 @@ using namespace std;
 // transform NFAe into NFA  (nfa-e.txt into nfa.txt)
 
 TransitionTable nfa;
+unordered_set<char> alphas;
 int maxState;
 
 // ----- put utility functions here ----------------------------------------
@@ -51,6 +49,11 @@ void buildnfa()
     }
 
     nfa.populate(transitions);
+
+    //Get all the alphas while we have the transitons saved
+    for(Transition transition1 : transitions)
+        for(char transitionChar : transition1.transitionChars)
+            alphas.insert(transitionChar);
 }
 
 
@@ -68,6 +71,37 @@ vector<int> & addTransitionsFromMatchingTargetChar(int currentState, char target
     return results;
 }
 
+void exportToFile(const char * filename, vector<Transition> & transitions)
+{
+    //If we've already exported our results before, delete them
+    remove(filename);
+
+    //Create the file
+    ofstream results(filename);
+
+    for(Transition transition : transitions)
+    {
+        results << transition.sourceState;
+
+        results << " ";
+        for(char transitionChar : transition.transitionChars)
+            results << transitionChar;
+        results << " ";
+
+        for(int targetState : transition.targetStates)
+        {
+            results << " ";
+            results << targetState;
+            results << " ";
+        }
+
+        //Write the EOL marker
+        results << -1;
+
+        //Done
+    }
+}
+
 int main()
 {
     char a;
@@ -79,8 +113,6 @@ int main()
     epsilonTransitions.resize(maxState);
     vector<int> * epsilonTransitonsForCurrentState;
 
-    //TODO: Get all the alphas
-
     //Get the epsilon transitions for all of them
     for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
     {
@@ -91,8 +123,7 @@ int main()
 
 
     //Calculate e*<target transition> e* for all states...
-
-    vector<Transition> nfaWithEpsilonTransitions;
+    vector<Transition> nfaWithoutEpsilonTransitions;
     Transition transition;
     vector<int> * currentEpsilonTransitionState = nullptr;
     vector<int> results;
@@ -105,10 +136,17 @@ int main()
 
             for(int epsilonState : *currentEpsilonTransitionState)
                 addTransitionsFromMatchingTargetChar(epsilonState, currentTransitionChar, results);
+
+            //Add the transitions
+            for(int result : results)
+            {
+                transition.set(stateNumber, currentTransitionChar, result);
+                nfaWithoutEpsilonTransitions.push_back(transition);
+            }
         }
     }
 
-    //TODO: Export the results to a text document
+    exportToFile("results.txt", nfaWithoutEpsilonTransitions);
 }
 
  
