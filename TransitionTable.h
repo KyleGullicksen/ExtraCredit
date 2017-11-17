@@ -34,6 +34,7 @@ public:
     void populate(vector<Transition> & transitions);
     vector<int> getSourceStates();
     int getStartStateNumber();
+    int getMaxState() const;
 };
 
 #endif //EXTRACREDIT_TRANSITIONTABLE_H

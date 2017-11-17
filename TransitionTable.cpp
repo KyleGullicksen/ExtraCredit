@@ -88,3 +88,8 @@ vector<Transition>& TransitionTable::getAllTransitions(int sourceState, vector<T
     return results;
 }
 
+int TransitionTable::getMaxState() const
+{
+    return maxState;
+}
+

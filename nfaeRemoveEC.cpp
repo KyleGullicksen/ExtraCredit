@@ -54,6 +54,9 @@ void buildnfa()
     for(Transition transition1 : transitions)
         for(char transitionChar : transition1.transitionChars)
             alphas.insert(transitionChar);
+
+    //set the maxState
+    maxState = nfa.getMaxState();
 }
 
 
