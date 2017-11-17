@@ -32,9 +32,15 @@ void TransitionTable::populate(vector<Transition>& transitions)
     table.resize(maxSourceState);
     maxState = maxSourceState;
 
+    //Each transition char vector has a fixed size of 52 (26 for the lower case letters, 26 for the uppers]
+    for(int index = 0; index < maxSourceState; ++index)
+        table[index].resize(NUMBER_OF_TRANSITION_CHARS);
+
     //Populate the table from the given transitions
     for(Transition transition : transitions)
-        add(transition);
+        for(char transitionChar : transition.transitionChars)
+            for(int targetState : transition.targetStates)
+                table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
 }
 
 int TransitionTable::getIndex(char transitionChar)
@@ -69,43 +75,16 @@ int TransitionTable::getStartStateNumber()
     return 0;
 }
 
-void TransitionTable::add(Transition& transition)
+vector<Transition>& TransitionTable::getAllTransitions(int sourceState, vector<Transition>& results)
 {
-    if(transition.sourceState < table.size())
-    {
-        table.resize(transition.sourceState + 1);
+    if(sourceState >= table.size())
+        return results;
 
-        //Init the new entires in the table
-
-        for(int index = transition.sourceState - table.size(); index < (transition.sourceState + 2); ++index)
-        {
-            //Do stuff
-        }
-    }
-
-
-    //Add the transiton to the table
-    for(char transitionChar : transition.transitionChars)
-        for(int targetState : transition.targetStates)
-            table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
-}
-
-TransitionTable::TransitionTable(int sourceState, char transitionChar, int endState)
-{
+    vector<vector<int>> & transitionCharsAndTargetsForSourceState = table.at(sourceState);
     Transition transition;
-    transition.set(sourceState, transitionChar, endState);
-    add(transition);
+
+
+
+    return results;
 }
 
-TransitionTable::TransitionTable(Transition transition)
-{
-    add(transition);
-}
-
-Transition TransitionTable::getLastState()
-{
-    vector<vector<int>> transitionCharsAndTargets = table[table.size() - 1];
-
-    Transition lastTransition;
-    lastTransition.set(table.size() - 1, transitionCharsAndTargets)
-}

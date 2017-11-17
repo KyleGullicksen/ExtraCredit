@@ -53,5 +53,12 @@ char Transition::getTopTransitionChar()
 
 void Transition::set(int sourceState, int targetState)
 {
+    this->sourceState = sourceState;
+    this->targetStates.push_back(targetState);
+}
 
+void Transition::set(int sourceState, vector<int>& targets)
+{
+    this->sourceState = sourceState;
+    this->targetStates.insert(this->targetStates.end(), targets.begin(), targets.end());
 }

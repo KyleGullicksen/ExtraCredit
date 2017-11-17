@@ -5,7 +5,10 @@
 #ifndef EXTRACREDIT_TRANSITIONTABLE_H
 #define EXTRACREDIT_TRANSITIONTABLE_H
 
-#define EPSILON -2
+#define EPSILON 'e'
+#define NO_TRANSITION_CHAR '*'
+#define NO_TRANSITION -2
+#define NUMBER_OF_TRANSITION_CHARS 52
 
 #include <vector>
 #include <string>
@@ -21,20 +24,16 @@ class TransitionTable
 protected:
     vector<vector<vector<int>>> table;
     int maxState = 0;
-
     int getIndex(char transitionChar);
 public:
     TransitionTable() = default;
-    TransitionTable(Transition transition);
-    TransitionTable(int sourceState, char transitionChar, int endState);
     explicit TransitionTable(vector<Transition> & transitions);
     vector<int> * getTransitions(int sourceState, char transitionChar);
+    vector<Transition> & getAllTransitions(int sourceState, vector<Transition> & results);
     int size();
     void populate(vector<Transition> & transitions);
     vector<int> getSourceStates();
     int getStartStateNumber();
-    Transition getLastState();
-    void add(Transition& transition);
 };
 
 #endif //EXTRACREDIT_TRANSITIONTABLE_H

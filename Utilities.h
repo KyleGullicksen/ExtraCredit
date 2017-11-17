@@ -12,7 +12,7 @@ using std::vector;
 using std::string;
 
 namespace Utilities {
-    vector<string> split(string str, char delimiter);
+    vector<string>& split(string& str, char delimiter, vector<string>& results);
 };
 
 #endif //EXTRACREDIT_UTILITIES_H

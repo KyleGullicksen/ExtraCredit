@@ -4,9 +4,8 @@
 
 #include "Utilities.h"
 
-vector<string> Utilities::split(string str, char delimiter)
+vector<string>& Utilities::split(string& str, char delimiter, vector<string>& results)
 {
-    vector<string> components;
     string currentComponent = "";
 
     bool isDelimiter = false;
@@ -20,7 +19,7 @@ vector<string> Utilities::split(string str, char delimiter)
 
         if(isDelimiter && !currentComponent.empty())
         {
-            components.push_back(currentComponent);
+            results.push_back(currentComponent);
             currentComponent.clear();
         }
 
@@ -28,5 +27,5 @@ vector<string> Utilities::split(string str, char delimiter)
         currentComponent.push_back(currentChar);
     }
 
-    return components;
+    return results;
 }

@@ -67,7 +67,7 @@ void buildnfa()
 
     for(string currentLine; getline(fin, currentLine);)
     {
-        components = split(currentLine, ' ');
+        components = split(currentLine, ' ', <#initializer#>);
 
         if(components.size() != 4)
         {
