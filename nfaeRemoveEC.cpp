@@ -4,6 +4,7 @@
 #include<string>
 #include "TransitionTable.h"
 #include "Transition.h"
+#include <unordered_set>
 #include "Utilities.h"
 
 using namespace std;
@@ -12,6 +13,7 @@ using namespace std;
 
 TransitionTable nfa;
 int maxState;
+unordered_set<char> alphas;
 
 // ----- put utility functions here ----------------------------------------
 
@@ -100,17 +102,33 @@ vector<int> & removeEpsilons(int currentStateNumber, char targetTransitionChar, 
 
 }
 
-vector<int> & removeEpsilonTransitionsFor(int stateNumber, char transitionChar, vector<int> & results)
-{
-
-}
-
 int main()
 {
     char a;
     buildnfa();
 
     // for each state-char pair of NFA1, compute e*chare* to add to NFA2
+    vector<int> results;
+    vector<Transition> nfaWithoutEpsilonTransitions;
+    Transition transition;
+
+    for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
+    {
+        results.clear();
+
+        for(char alpha : alphas)
+            removeEpsilons(stateNumber, alpha, results);
+
+        //Make transitions
+        for(int result : results)
+        {
+            transition.set(stateNumber, result);
+            nfaWithoutEpsilonTransitions.push_back(transition);
+        }
+    }
+
+    TransitionTable nfaWithoutEpsilon(nfaWithoutEpsilonTransitions);
+
 
     cout << "All the states reachable using only e's" << endl;
     for(int s = 0; s <= maxState; s++)
