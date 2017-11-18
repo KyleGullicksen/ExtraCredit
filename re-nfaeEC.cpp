@@ -1,17 +1,34 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "TransitionTable.h"
-#include "Transition.h"
 
 using namespace std;
 
-int stateNumber = 0;
+#define NO_TRANSITION '*'
+#define NO_STATE -1
+#define EPSILON '!'
 
-vector<TransitionTable> machines;
+struct Transition
+{
+    int source = 0;
+    char acceptedCharacter = 'a';
+    vector<int> destinations;
+};
+
+vector<vector<Transition>> machines;
+int stateIndex = 0;
 
 // ------------- Put utility functions here --------------------
 
+Transition makeTransition(int sourceState, char acceptedChar, int target)
+{
+    Transition transition;
+    transition.source = sourceState;
+    transition.acceptedCharacter = acceptedChar;
+    transition.destinations.push_back(target);
+
+    return transition;
+}
 
 void processConcat()
 {
@@ -25,7 +42,7 @@ void processConcat()
         cout << "copying the machine first ...." << endl;
         // copy the machine and display it }
 
-        // create trasition from M1's end to M2's start
+        // create transition from M1's end to M2's start
         // add the new machine to NFA
     }
 }
@@ -39,19 +56,15 @@ void processOr()
     cin >> M2;
     if(M1 == M2)
     { // must be a different one from M1
-        cout << "Enter differnt number for the second machine";
+        cout << "Enter different number for the second machine";
         cin >> M2;
     }
 
-    // create new start
-    // create new final
-    // For the new machine in NFA:
-    // add transition from new start to M1 start
-    // add transition from new start to M2 start
-    // add M1 and M2
-    // add transition from M1 end to new final
-    // add transition from M2 end to new final
+    vector<Transition> & firstMachine = machines[M1];
+    vector<Transition> & secondMachine = machines[M2];
 
+    //Need a new start, and a new end
+    Transition start = makeTransition();
 }
 
 void processStar()
@@ -61,26 +74,16 @@ void processStar()
     cin >> M1;
 
     //get the requested machine
-    TransitionTable & machine = machines[M1];
+    vector<Transition> & machine = machines[M1];
 
     //Make a new start state [linking this new start state to the old start state]
-    Transition start;
-    start.set(++stateNumber, machine.getStartStateNumber());
+    Transition & oldStart = machine[0];
+    Transition & oldEnd = machine[machine.size() - 1];
 
-
-    //Create a new final state
-    Transition final;
-    final.set(machine.get)
-
-    // create new start
-    // create new final
-    // For the new machine in NFA:
-    // add transition from new start to M1 start
-    // add M1
-    // add transition (back) from M1 end to M1 start
-    // add transition from M1 end to new final
-    // add transition (skip) from new to new final
-
+    //Make a new starting node
+    Transition start = makeTransition(stateIndex++, EPSILON, oldStart.source);
+    start.destinations.push_back(stateIndex);
+    oldEnd.destinations.push_back(stateIndex);
 }
 
 void processPlus()
@@ -111,20 +114,31 @@ int main()
     // display the transition
     // add it to NFA
     char c;
-    Transition s;
     vector<char> alphabet;
+    Transition start;
+    Transition end;
+    vector<Transition> currentMachine;
+
     ifstream fin("re.txt", ios::in);
     while(fin >> c)
     {
+        currentMachine.clear();
+
         // build a transition for arrow label c
-        s.set(++stateNumber, c, stateNumber++);
+        start.source = stateIndex++;
+        start.acceptedCharacter = c;
+        start.destinations.push_back()
+
+        currentMachine.push_back(start);
+
+        machines.push_back(currentMachine);
 
         // display the transition
 //            0---a---1
 //            Initial=0
 //            Final=1
-        cout << s.sourceState << "--" << s.getTopTransitionChar() << "--" << s.getTopTargetState() << endl;
-        machines.emplace_back(TransitionTable(s));
+
+        cout << start.source << "--" << start.acceptedCharacter << "--" << start.destinstion << endl;
     }
     fin.close();
     char A;

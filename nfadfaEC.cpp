@@ -1,7 +1,6 @@
 #include<iostream>
 #include<fstream>
 #include<vector>
-#include<string>
 #include <queue>
 #include <unordered_set>
 #include "Transition.h"
@@ -13,20 +12,12 @@ using Utilities::split;
 
 #define LINE_END_MARKER = -1
 
-// transform NFA into DFA  (nfa.txt into dfa.txt)
-// 0 a 0 1 -1 => <0> a <01>
-// States allowed are 0 through 9
-// Arrows allowed are a through e
-
 ofstream fout("dfa.txt", ios::out);arrow
 
-//vector<int> NFA[10][5];
-TransitionTable nfa;
 TransitionTable dfa;
+TransitionTable nfa;
 unordered_set<char> alphas;
 int maxState;  // the highest state indicated in nfa.txt first line
-vector<string> DFA;
-
 
 // ----- utility functions ----------------------------------------
 string makeCompositeState(vector<int> & states)
@@ -67,7 +58,8 @@ void buildnfa()
 
     for(string currentLine; getline(fin, currentLine);)
     {
-        components = split(currentLine, ' ', <#initializer#>);
+        components.clear();
+        split(currentLine, ' ', components);
 
         if(components.size() != 4)
         {
@@ -79,13 +71,9 @@ void buildnfa()
         transition.setTransitions(components[1]);
 
         //Add each target state
-        for(int index = 2; index < components.size(); ++index)
+        for(int index = 2; index < components.size() && components[index] != "-1"; ++index)
         {
             currentState = stoi(components[index]);
-
-            if(currentState == LINE_END_MARKER)
-                break;
-
             transition.targetStates.push_back(currentState);
         }
     }
@@ -97,12 +85,6 @@ void buildnfa()
     alphabet(transitions);
 
     fin.close();
-}
-
-// adds state to DFA if it is new
-void addNewState(string state)
-{
-    //NOPE NOT USING THIS
 }
 
 vector<int> & reduce(vector<int> & transitions, vector<int> & results)
@@ -140,7 +122,7 @@ int main()
 
     //Add the starting state
     vector<int> startingState;
-    startingState.push_back(nfa.getStartState());
+    startingState.push_back(nfa.getStartStateNumber());
     newCompositeStates.push(startingState);
 
     while(!newCompositeStates.empty())
@@ -175,21 +157,8 @@ int main()
             //Add a new transition to the DFA [might need to refactor the Transition class]
             //newDFATransition.
         }
-
-
     }
 
-
-    while(x < DFA.size()) // for each DFA state
-    {
-        // display current DFA state S
-        // For each arrow
-        // go through each component state of S
-        // grab all destinations from NFA
-        // append the destinations to a state name DS
-        //If a transition on the arrow found, display it and send to dfa.txt
-        // and DS is added to DFA if new
-    }
     fout << "Any state with the original final state number is final" << endl;
     fout.close();
 }

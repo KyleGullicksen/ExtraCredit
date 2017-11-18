@@ -113,3 +113,11 @@ int TransitionTable::getMaxState() const
     return maxState;
 }
 
+TransitionTable::TransitionTable(Transition transition)
+{
+    vector<Transition> transitions;
+    transitions.push_back(transition);
+
+    populate(transitions);
+}
+

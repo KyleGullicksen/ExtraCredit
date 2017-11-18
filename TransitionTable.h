@@ -28,6 +28,7 @@ protected:
 public:
     TransitionTable() = default;
     explicit TransitionTable(vector<Transition> & transitions);
+    explicit TransitionTable(Transition transition);
     vector<int> * getTransitions(int sourceState, char transitionChar);
     vector<Transition> & getAllTransitions(int sourceState, vector<Transition> & results);
     int size();
