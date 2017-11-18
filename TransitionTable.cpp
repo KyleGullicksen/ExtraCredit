@@ -82,8 +82,28 @@ vector<Transition>& TransitionTable::getAllTransitions(int sourceState, vector<T
 
     vector<vector<int>> & transitionCharsAndTargetsForSourceState = table.at(sourceState);
     Transition transition;
+    char currentTransitonChar;
+    bool isLower = true;
+    for(int index = 0; index < NUMBER_OF_TRANSITION_CHARS; ++index)
+    {
+        if(transitionCharsAndTargetsForSourceState[index].empty())
+            continue;
 
+        if(index == 26)
+            isLower = false;
 
+        if(isLower)
+            currentTransitonChar = 'a' + index;
+        else
+            currentTransitonChar = 'A' + index;
+
+        //Make the transitons
+        for(int target : transitionCharsAndTargetsForSourceState[index])
+        {
+            transition.set(sourceState, currentTransitonChar, target);
+            results.push_back(transition);
+        }
+    }
 
     return results;
 }
