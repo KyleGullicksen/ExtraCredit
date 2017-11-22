@@ -16,14 +16,14 @@ int stateNumberCounter = 0;
 
 struct Transition
 {
-    int source;
+    int source = 0;
     unordered_set<char> acceptedChars;
-    int destination;
+    int destination = 0;
 };
 
 struct Node
 {
-    int number;
+    int number = 0;
     unordered_map<int, Transition> transitions;
 };
 
@@ -44,7 +44,64 @@ public:
         if(node.number > end)
             end = node.number;
 
-        nodes[node.number] = node;
+        if(nodes.find(node.number) == nodes.end())
+        {
+            nodes[node.number] = node;
+            return;
+        }
+
+        //This node already exists, so let's merge them together [heavy operation]
+        Node & existingNode = nodes.at(node.number);
+        nodes[node.number] = merge(existingNode, node); //Overwrite our existing entry
+    }
+
+    Node & merge(Node & firstNode, Node & secondNode)
+    {
+        if(firstNode.number != secondNode.number)
+            return firstNode;
+
+        Transition firstTransition;
+        Transition secondTransition;
+
+        //Cases: Both share a source and a destination
+            //Sol: Merge
+        //Case 2: Other source not in this source
+            //Add the other's element verbatim
+        //Case 3:
+            //this source contains something not in the other
+            //Nothing to be done
+
+
+        //Merge matching transitions...
+        for(auto firstElement : firstNode.transitions)
+        {
+            firstTransition = firstElement.second;
+
+            for(auto secondElement : secondNode.transitions)
+            {
+                secondTransition = secondElement.second;
+
+                if((firstTransition.source == secondTransition.source) && (firstTransition.destination == secondTransition.destination))
+                    mergeTransition(firstTransition, secondTransition);
+            }
+        }
+
+        //Find source nodes not present in the firstNode in the secondNode
+        unordered_set<int> firstNodeSources;
+        for(auto firstElement : firstNode.transitions)
+            firstNodeSources.insert(firstElement.second.source);
+
+        for(auto secondElement : secondNode.transitions)
+            if(firstNodeSources.find(secondElement.second.source) == firstNodeSources.end())
+                firstNode.transitions[secondElement.second.source] = secondElement.second;
+
+        return firstNode;
+    }
+
+    Transition & mergeTransition(Transition & firstTransition, Transition & secondTransition)
+    {
+        for(char c : secondTransition.acceptedChars)
+            firstTransition.acceptedChars.insert(c);
     }
 
     Node & get(int number)
@@ -92,11 +149,38 @@ public:
         }
     }
 
+    void newStart(char transitionToOldStart)
+    {
+        int newStartNumber = stateNumberCounter++;
+        int oldStartNumber = getStartNumber();
+        link(newStartNumber, transitionToOldStart, oldStartNumber);
+    }
+
+    void newEnd(char transitionToOldEnd)
+    {
+        int newEndNumber = stateNumberCounter++;
+        int oldEndNumber = getEndNumber();
+        link(newEndNumber, transitionToOldEnd, oldEndNumber);
+    }
+
+    virtual void link(int source, char transitionChar, Machine & machine)
+    {
+        int oldMachineStart = machine.getStartNumber();
+        int oldMachineEnd = machine.getEndNumber();
+
+        machine.visit([](Node & node) -> void {
+            add(node); //Hopefully this is the right add being called here
+        });
+
+        link(source, EPSILON, oldMachineStart);
+        link(oldMachineEnd, EPSILON, machine.getEndNumber());
+    }
+
     virtual void link(int source, char transitionChar, int destination)
     {
         Transition transition;
         transition.source = source;
-        transition.acceptedChars.push_back(transitionChar);
+        transition.acceptedChars.insert(transitionChar);
         transition.destination = destination;
         link(transition);
     }
@@ -108,7 +192,7 @@ public:
             Node start;
             start.number = transition.source;
             add(start);
-        }transition.acceptedCharacters.push_back(transitionChar);
+        }
         if(nodes.find(transition.destination) == nodes.end())
         {
             Node end;
@@ -116,7 +200,7 @@ public:
             add(end);
         }
 
-        Node & node = nodes.at(transition.source);
+        appendTransition(transition.source, transition);
     }
 
     Node nextNode()
@@ -161,6 +245,15 @@ void processConcat()
 
         // create transition from M1's end to M2's start
         // add the new machine to NFA
+
+        Machine & machine = machines[M1];
+        machine.link(nextStateNumber(), EPSILON, machine);
+    }
+    else
+    {
+        Machine & firstMachine = machines.at(M1);
+        Machine & secondMachine = machines.at(M1);
+        firstMachine.link(nextStateNumber(), EPSILON, secondMachine);
     }
 }
 
@@ -176,6 +269,16 @@ void processOr()
         cout << "Enter different number for the second machine";
         cin >> M2;
     }
+
+    Machine & firstMachine = machines[M1];
+    Machine & secondMachine = machines[M2];
+    int endOfSecondMachine = secondMachine.getEndNumber();
+
+    firstMachine.newStart(EPSILON);
+    firstMachine.newEnd(EPSILON);
+
+    firstMachine.link(firstMachine.getStartNumber(), EPSILON, secondMachine);
+    firstMachine.link(endOfSecondMachine, EPSILON, firstMachine.getEndNumber());
 }
 
 void processStar()
@@ -184,6 +287,13 @@ void processStar()
     cout << "Enter number of the machine:";
     cin >> M1;
 
+    Machine & machine = machines.at(M1);
+
+    machine.newEnd(EPSILON);
+    machine.newEnd(EPSILON);
+
+    machine.link(machine.getStartNumber(), EPSILON, machine.getEndNumber());
+    machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
 }
 
 void processPlus()
@@ -194,16 +304,9 @@ void processPlus()
 
     Machine & machine = machines.at(M1);
 
-    int oldStart = machine.getStartNumber();
-    int oldEnd = machine.getEndNumber();
-
-    int newStart = nextStateNumber();
-    int newEnd = nextStateNumber();
-
-    machine.link(newStart, EPSILON, oldStart);
-    machine.link(oldEnd, EPSILON, newEnd);
-    machine.link(newEnd, EPSILON, newStart);
-}
+    machine.newStart(EPSILON);
+    machine.newEnd(EPSILON);
+    machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
 
 void exportToFile()
 {
