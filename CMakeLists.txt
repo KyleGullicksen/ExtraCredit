@@ -3,5 +3,5 @@ project(ExtraCredit)
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES re-nfaeEC.cpp)
 add_executable(ExtraCredit ${SOURCE_FILES})

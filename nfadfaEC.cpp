@@ -12,7 +12,7 @@ using Utilities::split;
 
 #define LINE_END_MARKER = -1
 
-ofstream fout("dfa.txt", ios::out);arrow
+ofstream fout("dfa.txt", ios::out);
 
 TransitionTable dfa;
 TransitionTable nfa;

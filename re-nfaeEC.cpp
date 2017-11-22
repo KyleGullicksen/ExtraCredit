@@ -7,12 +7,11 @@
 
 using namespace std;
 
-vector<Machine> machines;
-int stateNumberCounter = 0;
-
 #define NO_TRANSITION '*'
 #define NO_STATE -1
 #define EPSILON '!'
+
+int stateNumberCounter = 0;
 
 struct Transition
 {
@@ -64,12 +63,12 @@ public:
         Transition secondTransition;
 
         //Cases: Both share a source and a destination
-            //Sol: Merge
+        //Sol: Merge
         //Case 2: Other source not in this source
-            //Add the other's element verbatim
+        //Add the other's element verbatim
         //Case 3:
-            //this source contains something not in the other
-            //Nothing to be done
+        //this source contains something not in the other
+        //Nothing to be done
 
 
         //Merge matching transitions...
@@ -168,7 +167,7 @@ public:
         int oldMachineStart = machine.getStartNumber();
         int oldMachineEnd = machine.getEndNumber();
 
-        machine.visit([](Node & node) -> void {
+        machine.visit([&](Node & node) -> void {
             add(node); //Hopefully this is the right add being called here
         });
 
@@ -221,6 +220,17 @@ public:
         return end;
     }
 };
+
+vector<Machine> machines;
+
+string setToString(unordered_set<char> set)
+{
+    string str;
+
+    for(char c : set)
+        str.push_back(c);
+    return str;
+}
 
 int nextStateNumber()
 {
@@ -301,29 +311,31 @@ void processPlus()
     int M1;
     cout << "Enter number of the machine:";
     cin >> M1;
-
-    Machine & machine = machines.at(M1);
-
+    Machine& machine = machines.at(M1);
     machine.newStart(EPSILON);
     machine.newEnd(EPSILON);
     machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
+}
 
 void exportToFile()
 {
     Node currentNode;
     ofstream output("reToNFAEOutput.txt", ios::out);
+    Transition transition;
 
     for(Machine machine : machines)
     {
         //Export each machine to file...
 
         //Format: <source> <transition chars> <destination> newline
-        machine.visit([](Node node) ->void {
-            for(Transition transition : node.transitions)
+        machine.visit([&](Node node) ->void {
+            for(auto transitionElement : node.transitions)
             {
+                transition = transitionElement.second;
+
                 output << node.number;
                 output << " ";
-                output << transition.acceptedCharacters;
+                output << setToString(transition.acceptedChars);
                 output << " ";
                 output << transition.destination;
                 output << "\n";
