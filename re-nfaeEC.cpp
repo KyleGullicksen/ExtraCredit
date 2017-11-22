@@ -9,7 +9,7 @@ using namespace std;
 
 #define NO_TRANSITION '*'
 #define NO_STATE -1
-#define EPSILON '!'
+#define EPSILON 'e'
 
 int stateNumberCounter = 0;
 
@@ -28,26 +28,73 @@ struct Node
 
 class Machine
 {
+private:
+    void print(Node * node, unordered_set<int> & seenNodes)
+    {
+        if(node == nullptr)
+            return;
+
+        bool seen = seenNodes.find(node->number) != seenNodes.end();
+
+        if(node->transitions.empty() && !seen)
+        {
+            cout << node->number << " has no transitions" << endl;
+            seenNodes.insert(node->number);
+            return;
+        }
+        if(seen)
+            return;
+
+        seenNodes.insert(node->number);
+
+        //Print all of the transitions for the current node
+        Transition transition;
+        for(auto transitionElement : node->transitions)
+        {
+            transition = transitionElement.second;
+
+            for(char c : transition.acceptedChars)
+            {
+                cout << node->number << "--" << c << "--" << transition.destination << endl;
+            }
+        }
+
+        //Print all of the linked nodes
+        for(auto transitionElement : node->transitions)
+        {
+            transition = transitionElement.second;
+            Node & nextNode = get(transition.destination);
+            print(&nextNode, seenNodes);
+        }
+
+    }
+
 protected:
-    int start = INT_MAX;
-    int end = INT_MIN;
+    int smallestNodeNumber = INT_MAX;
+    int largesstNodeNumber = INT_MIN;
+    int start = 0; //The start and the end nodes imply intent; the program cannot guess which nodes should be the start and the end nodes
+    int end = 0;
+
     unordered_map<int, Node> nodes;
 public:
-    void add(Node node)
+    void add(Node & node)
     {
         //new start?
-        if(node.number < start)
-            start = node.number;
+        if(node.number < smallestNodeNumber)
+            smallestNodeNumber = node.number;
 
         //new end?
-        if(node.number > end)
-            end = node.number;
+        if(node.number > largesstNodeNumber)
+            largesstNodeNumber = node.number;
 
         if(nodes.find(node.number) == nodes.end())
         {
+            cout << "Node number " << node.number << " added for the first time" << endl;
             nodes[node.number] = node;
             return;
         }
+
+        cout << "Node " << node.number << " was already there -- merging" << endl;
 
         //This node already exists, so let's merge them together [heavy operation]
         Node & existingNode = nodes.at(node.number);
@@ -110,12 +157,12 @@ public:
 
     Node & getStartNode()
     {
-        return nodes.at(start);
+        return nodes.at(smallestNodeNumber);
     }
 
     Node & getEndNode()
     {
-        return nodes.at(end);
+        return nodes.at(largesstNodeNumber);
     }
 
     void appendTransition(int nodeNumber, Transition transition)
@@ -152,27 +199,37 @@ public:
     {
         int newStartNumber = stateNumberCounter++;
         int oldStartNumber = getStartNumber();
+
+        cout << "newStartNumber: " << newStartNumber << endl;
+        cout << "oldStartNumber: " << oldStartNumber << endl;
+
         link(newStartNumber, transitionToOldStart, oldStartNumber);
+        start = newStartNumber; //Update the start index
     }
 
     void newEnd(char transitionToOldEnd)
     {
         int newEndNumber = stateNumberCounter++;
         int oldEndNumber = getEndNumber();
-        link(newEndNumber, transitionToOldEnd, oldEndNumber);
+
+        cout << "newEndNumber: " << newEndNumber << endl;
+        cout << "oldEndNumber: " << oldEndNumber << endl;
+
+        link(oldEndNumber, EPSILON, newEndNumber);
+        end = newEndNumber; //Update the end index
     }
 
-    virtual void link(int source, char transitionChar, Machine & machine)
+    virtual void link(int source, char transitionChar, Machine & machine, int destination, char destinationTransitionChar)
     {
-        int oldMachineStart = machine.getStartNumber();
-        int oldMachineEnd = machine.getEndNumber();
+        int machineStartIndex = machine.getStartNumber();
+        int machineEndIndex = machine.getEndNumber();
 
         machine.visit([&](Node & node) -> void {
-            add(node); //Hopefully this is the right add being called here
+            add(node);
         });
 
-        link(source, EPSILON, oldMachineStart);
-        link(oldMachineEnd, EPSILON, machine.getEndNumber());
+        link(source, transitionChar, machineStartIndex);
+        link(machineEndIndex, transitionChar, destination);
     }
 
     virtual void link(int source, char transitionChar, int destination)
@@ -188,12 +245,14 @@ public:
     {
         if(nodes.find(transition.source) == nodes.end())
         {
+            cout << "Making the source node: " << transition.source << endl;
             Node start;
             start.number = transition.source;
             add(start);
         }
         if(nodes.find(transition.destination) == nodes.end())
         {
+            cout << "Making the destination node: " << transition.destination << endl;
             Node end;
             end.number = transition.destination;
             add(end);
@@ -218,6 +277,22 @@ public:
     int getEndNumber()
     {
         return end;
+    }
+
+    void setStart(int start)
+    {
+        Machine::start = start;
+    }
+
+    void setEnd(int end)
+    {
+        Machine::end = end;
+    }
+
+    void print()
+    {
+        unordered_set<int> seenNodes;
+        print(&(get(getStartNumber())), seenNodes);
     }
 };
 
@@ -257,13 +332,22 @@ void processConcat()
         // add the new machine to NFA
 
         Machine & machine = machines[M1];
-        machine.link(nextStateNumber(), EPSILON, machine);
+        int newEnd = nextStateNumber();
+        machine.link(machine.getEndNumber(), EPSILON, machine, newEnd, EPSILON);
+        machine.setEnd(newEnd);
+        machine.print();
     }
     else
     {
         Machine & firstMachine = machines.at(M1);
         Machine & secondMachine = machines.at(M1);
-        firstMachine.link(nextStateNumber(), EPSILON, secondMachine);
+
+        int newEnd = nextStateNumber();
+
+        firstMachine.link(firstMachine.getEndNumber(), EPSILON, secondMachine, newEnd, EPSILON);
+        firstMachine.setEnd(newEnd);
+
+        firstMachine.print();
     }
 }
 
@@ -282,13 +366,12 @@ void processOr()
 
     Machine & firstMachine = machines[M1];
     Machine & secondMachine = machines[M2];
-    int endOfSecondMachine = secondMachine.getEndNumber();
 
     firstMachine.newStart(EPSILON);
     firstMachine.newEnd(EPSILON);
 
-    firstMachine.link(firstMachine.getStartNumber(), EPSILON, secondMachine);
-    firstMachine.link(endOfSecondMachine, EPSILON, firstMachine.getEndNumber());
+    firstMachine.link(firstMachine.getStartNumber(), EPSILON, secondMachine, firstMachine.getEndNumber(), EPSILON);
+    firstMachine.print();
 }
 
 void processStar()
@@ -299,11 +382,16 @@ void processStar()
 
     Machine & machine = machines.at(M1);
 
+    machine.newStart(EPSILON);
     machine.newEnd(EPSILON);
-    machine.newEnd(EPSILON);
+
+    cout << "New Start: " << machine.getStartNumber() << endl;
+    cout << "New end: " << machine.getEndNumber() << endl;
 
     machine.link(machine.getStartNumber(), EPSILON, machine.getEndNumber());
     machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
+
+    machine.print();
 }
 
 void processPlus()
@@ -315,6 +403,8 @@ void processPlus()
     machine.newStart(EPSILON);
     machine.newEnd(EPSILON);
     machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
+
+    machine.print();
 }
 
 void exportToFile()
@@ -367,12 +457,16 @@ int main()
         end = nextStateNumber();
 
         machine.link(start, c, end);
+        machine.setStart(start);
+        machine.setEnd(end);
 
         //Display the transiton
         cout << start << "--" << c << "--" << end << endl;
         cout << "Initial=" << start << endl;
         cout << "Final=" << end << endl;
         cout << "" << endl;
+
+        machines.push_back(machine);
     }
 
     input.close();
