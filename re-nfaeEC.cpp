@@ -351,6 +351,8 @@ void processConcat()
     }
 }
 
+
+//Good
 void processOr()
 {
     int M1, M2;
@@ -374,6 +376,7 @@ void processOr()
     firstMachine.print();
 }
 
+//Good
 void processStar()
 {
     int M1;
@@ -394,6 +397,7 @@ void processStar()
     machine.print();
 }
 
+//Good
 void processPlus()
 {
     int M1;
