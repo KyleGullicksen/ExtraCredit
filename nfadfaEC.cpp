@@ -61,8 +61,6 @@ void buildnfa()
     vector<string> components;
     int currentState = 0;
 
-    cout << "Processing each line" << endl;
-
     for(string currentLine; getline(fin, currentLine);)
     {
         components.clear();
@@ -71,14 +69,8 @@ void buildnfa()
 
         split(currentLine, ' ', components);
 
-        cout << "Found these components" << endl;
-        for(string comp : components)
-            cout << "Comp: " << comp << endl;
-        cout << "Done" << endl;
-
         if(components.size() != 4)
         {
-            cout << "The input line [" << currentLine << "] was malformed. Ignoring this line." << endl;
             continue;
         }
 
@@ -92,11 +84,8 @@ void buildnfa()
             transition.targetStates.push_back(currentState);
         }
 
-        cout << "Transition: " << transition.toString() << endl;
         transitions.push_back(transition);
     }
-
-    cout << "Finished processing each line" << endl;
 
     //Populate the transitions table from our transitions list
     nfa.populate(transitions);
@@ -151,8 +140,6 @@ int main()
         currentCompositeState = newCompositeStates.front();
         newCompositeStates.pop();
 
-        cout << "Processing: [" << makeCompositeState(currentCompositeState) << "]" << endl;
-
         for(char alpha : alphas)
         {
             transitions.clear();
@@ -172,14 +159,10 @@ int main()
 
             compositeStateStr = makeCompositeState(newCompositeState);
 
-            if(compositeStateStr.empty() || (seenStates.find(compositeStateStr) != seenStates.end()))
+            if(compositeStateStr.empty())
                 continue;
 
-            newCompositeStates.push(newCompositeState);
-            cout << "Pushing: " << compositeStateStr << endl;
-
-            seenStates.insert(compositeStateStr);
-
+            //Add a new DFA transition
             if(currentCompositeState.size() == 1)
                 newDFATransition.sourceState = currentCompositeState[0];
             newDFATransition.sourceStates.insert(newDFATransition.sourceStates.end(), currentCompositeState.begin(), currentCompositeState.end());
@@ -194,6 +177,14 @@ int main()
             newDFATransition.sourceStates.clear();
             newDFATransition.transitionChars.clear();
             newDFATransition.targetStates.clear();
+
+            //If this is a new state, push it to the new state queue
+
+            if(seenStates.find(compositeStateStr) == seenStates.end())
+            {
+                newCompositeStates.push(newCompositeState);
+                seenStates.insert(compositeStateStr);
+            }
         }
     }
 
