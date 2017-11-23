@@ -101,6 +101,16 @@ public:
         nodes[node.number] = merge(existingNode, node); //Overwrite our existing entry
     }
 
+    int getSmallestNodeNumber() const
+    {
+        return smallestNodeNumber;
+    }
+
+    int getLargesstNodeNumber() const
+    {
+        return largesstNodeNumber;
+    }
+
     Node & merge(Node & firstNode, Node & secondNode)
     {
         if(firstNode.number != secondNode.number)
@@ -219,6 +229,20 @@ public:
         end = newEndNumber; //Update the end index
     }
 
+    virtual void link(int source, char transitionChar, Machine & machine)
+    {
+        int machineStartIndex = machine.getStartNumber();
+        int machineEndIndex = machine.getEndNumber();
+
+        cout << "machineEndIndex: " << machineEndIndex << endl;
+
+        machine.visit([&](Node & node) -> void {
+            add(node);
+        });
+
+        link(source, transitionChar, machineStartIndex);
+    }
+
     virtual void link(int source, char transitionChar, Machine & machine, int destination, char destinationTransitionChar)
     {
         int machineStartIndex = machine.getStartNumber();
@@ -294,6 +318,83 @@ public:
         unordered_set<int> seenNodes;
         print(&(get(getStartNumber())), seenNodes);
     }
+
+    static int transformIndex(int stateNumber, int maxNumber)
+    {
+        int newStateNumber = stateNumber + maxNumber + 1;
+
+        cout << "Transformed " << stateNumber << " into " << newStateNumber << " (Max: " << maxNumber << ")" << endl;
+
+        return newStateNumber;
+    }
+
+    static Machine & append(Machine & first, Machine & second, Machine & result)
+    {
+        //Add all of the nodes in the first to the result
+        first.visit([&](Node & node) -> void {
+            result.add(node);
+        });
+
+        //set the start and the end to be the same as well
+        result.setStart(first.getStartNumber());
+        result.setEnd(first.getEndNumber());
+
+        if(second.empty())
+            return result;
+
+        result.newEnd(EPSILON);
+
+        int middleIndex = result.getEndNumber();
+        int secondStartIndex = second.getStartNumber();
+
+        cout << "Middle Index: " << middleIndex << endl;
+        cout << "secondStartIndex: " << secondStartIndex << endl;
+
+        second.visit([&](Node & node) -> void{
+            Node newNode;
+            newNode.number = transformIndex(node.number, first.getLargesstNodeNumber());
+
+            for(auto transitionElement : node.transitions)
+            {
+                Transition transition = transitionElement.second;
+                transition.source = transformIndex(transition.source, first.getLargesstNodeNumber());
+                transition.destination = transformIndex(transition.destination, first.getLargesstNodeNumber());
+                transition.acceptedChars = transition.acceptedChars;
+
+                newNode.transitions[transformIndex(transitionElement.first, first.getLargesstNodeNumber())] = transition;
+
+                cout << "Adding the transition: " << transition.destination << "->" << endl;
+            }
+
+            cout << "Adding node to the result " << newNode.number << endl;
+            result.add(newNode);
+        });
+
+        cout << "second's start: " << second.getStartNumber() << endl;
+
+        //Link the middle node to the beginning of the second half
+        result.link(middleIndex, EPSILON, transformIndex(second.getStartNumber(), first.getLargesstNodeNumber()));
+
+        //Set the final end
+        result.setEnd(transformIndex(second.getEndNumber(), first.getLargesstNodeNumber()));
+
+        cout << "Result start: " << result.getStartNumber() << endl;
+        cout << "Result end: " << result.getEndNumber() << endl;
+
+        cout << "First" << endl;
+        first.print();
+
+        cout << "Second" << endl;
+        second.print();
+
+        cout << "Result" << endl;
+        result.print();
+    }
+
+    bool empty()
+    {
+        return nodes.empty();
+    }
 };
 
 vector<Machine> machines;
@@ -323,6 +424,9 @@ void processConcat()
     cin >> M1;
     cout << "Enter number of the second machine:";
     cin >> M2;
+
+    Machine result;
+
     if(M1 == M2)
     {
         cout << "copying the machine first ...." << endl;
@@ -331,24 +435,18 @@ void processConcat()
         // create transition from M1's end to M2's start
         // add the new machine to NFA
 
-        Machine & machine = machines[M1];
-        int newEnd = nextStateNumber();
-        machine.link(machine.getEndNumber(), EPSILON, machine, newEnd, EPSILON);
-        machine.setEnd(newEnd);
-        machine.print();
+        Machine & machine = machines.at(M1);
+        Machine::append(machine, machine, result);
     }
     else
     {
         Machine & firstMachine = machines.at(M1);
-        Machine & secondMachine = machines.at(M1);
+        Machine & secondMachine = machines.at(M2);
 
-        int newEnd = nextStateNumber();
-
-        firstMachine.link(firstMachine.getEndNumber(), EPSILON, secondMachine, newEnd, EPSILON);
-        firstMachine.setEnd(newEnd);
-
-        firstMachine.print();
+        Machine::append(firstMachine, secondMachine, result);
     }
+
+    machines.push_back(result);
 }
 
 
@@ -369,11 +467,16 @@ void processOr()
     Machine & firstMachine = machines[M1];
     Machine & secondMachine = machines[M2];
 
-    firstMachine.newStart(EPSILON);
-    firstMachine.newEnd(EPSILON);
+    Machine newMachine;
 
-    firstMachine.link(firstMachine.getStartNumber(), EPSILON, secondMachine, firstMachine.getEndNumber(), EPSILON);
-    firstMachine.print();
+    //Make the newMachine the same as the first machine
+    Machine::append(firstMachine, newMachine, newMachine);
+
+    newMachine.newStart(EPSILON);
+    newMachine.link(newMachine.getStartNumber(), EPSILON, secondMachine, newMachine.getEndNumber(), EPSILON);
+    newMachine.print();
+
+    machines.push_back(newMachine);
 }
 
 //Good
@@ -384,17 +487,21 @@ void processStar()
     cin >> M1;
 
     Machine & machine = machines.at(M1);
+    Machine newMachine;
+    Machine::append(machine, newMachine, newMachine);
 
-    machine.newStart(EPSILON);
-    machine.newEnd(EPSILON);
+    newMachine.newStart(EPSILON);
+    newMachine.newEnd(EPSILON);
 
-    cout << "New Start: " << machine.getStartNumber() << endl;
-    cout << "New end: " << machine.getEndNumber() << endl;
+    cout << "New Start: " << newMachine.getStartNumber() << endl;
+    cout << "New end: " << newMachine.getEndNumber() << endl;
 
-    machine.link(machine.getStartNumber(), EPSILON, machine.getEndNumber());
-    machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
+    newMachine.link(newMachine.getStartNumber(), EPSILON, newMachine.getEndNumber());
+    newMachine.link(newMachine.getEndNumber(), EPSILON, newMachine.getStartNumber());
 
-    machine.print();
+    newMachine.print();
+
+    machines.push_back(newMachine);
 }
 
 //Good
@@ -404,11 +511,16 @@ void processPlus()
     cout << "Enter number of the machine:";
     cin >> M1;
     Machine& machine = machines.at(M1);
-    machine.newStart(EPSILON);
-    machine.newEnd(EPSILON);
-    machine.link(machine.getEndNumber(), EPSILON, machine.getStartNumber());
+    Machine newMachine;
+    Machine::append(machine, newMachine, newMachine);
 
-    machine.print();
+    newMachine.newStart(EPSILON);
+    newMachine.newEnd(EPSILON);
+    newMachine.link(newMachine.getEndNumber(), EPSILON, newMachine.getStartNumber());
+
+    newMachine.print();
+
+    machines.push_back(newMachine);
 }
 
 void exportToFile()
