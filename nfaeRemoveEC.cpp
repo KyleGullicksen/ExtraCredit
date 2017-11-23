@@ -3,6 +3,7 @@
 #include<vector>
 #include "TransitionTable.h"
 #include <unordered_set>
+#include <unordered_map>
 #include "Utilities.h"
 
 using namespace std;
@@ -70,18 +71,6 @@ void buildnfa()
     maxState++;
 }
 
-vector<int>& addTransitionsFromMatchingTargetChar(int currentState, char targetChar, vector<int>& results)
-{
-    vector<int>* targetTransitions = nfa.getTransitions(currentState, targetChar);
-    if(targetTransitions != nullptr)
-        for(int stateNumber : *targetTransitions)
-        {
-            results.push_back(stateNumber);
-            addTransitionsFromMatchingTargetChar(stateNumber, EPSILON, results);
-        }
-    return results;
-}
-
 void exportToFile(const char* filename, vector<Transition>& transitions)
 {
     //If we've already exported our results before, delete them
@@ -108,6 +97,44 @@ void exportToFile(const char* filename, vector<Transition>& transitions)
     results.close();
 }
 
+vector<int>& matchesTargetCharStar(int currentState, char targetChar, vector<int> &results)
+{
+    vector<int>* targetTransitions = nfa.getTransitions(currentState, targetChar);
+
+    if(targetTransitions != nullptr) {
+        for(int stateNumber : *targetTransitions)
+        {
+            results.push_back(stateNumber);
+            matchesTargetCharStar(stateNumber, EPSILON, results);
+        }
+    }
+    else
+        cout << "\tNo transitions for the target: " << targetChar << " on the state: " << currentState << endl;
+
+    return results;
+}
+
+void matchesTargetFollowedByEpsilonStar(int currentStateNumber, char targetChar, vector<int> & results)
+{
+    vector<int> * targetTransitions = nfa.getTransitions(currentStateNumber, targetChar);
+
+    if(targetTransitions != nullptr)
+        for(int state : *targetTransitions)
+        {
+            results.push_back(state);
+            matchesTargetCharStar(state, EPSILON, results);
+        }
+}
+
+void matchesTargetChar(int currentStateNumber, char targetChar, vector<int> & results)
+{
+    vector<int> * transitions = nfa.getTransitions(currentStateNumber, targetChar);
+
+    if(transitions != nullptr)
+        for(int state : *transitions)
+            results.push_back(state);
+}
+
 int main()
 {
     char a;
@@ -119,41 +146,39 @@ int main()
     for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
     {
         currentEpsilonTransitions.clear();
-        addTransitionsFromMatchingTargetChar(stateNumber, EPSILON, currentEpsilonTransitions);
+        matchesTargetCharStar(stateNumber, EPSILON, currentEpsilonTransitions);
         epsilonTransitions.push_back(currentEpsilonTransitions);
     }
 
-
     //Calculate e*<target transition> e* for all states...
-    vector<Transition> nfaWithoutEpsilonTransitions;
-    Transition transition;
     vector<int> results;
+    vector<Transition> transitions;
+    Transition transition;
+
     for(int stateNumber = 0; stateNumber < maxState; stateNumber++)
     {
         for(char currentTransitionChar : alphas)
         {
             for(int epsilonState : epsilonTransitions[stateNumber])
             {
-                cout << "Looking for matching transitions for: " << epsilonState << " with char: " << currentTransitionChar << endl;
-                addTransitionsFromMatchingTargetChar(epsilonState, currentTransitionChar, results);
-            }
+                matchesTargetFollowedByEpsilonStar(epsilonState, currentTransitionChar, results);
 
-            //Add the transitions
-            for(int result : results)
-            {
-                transition.set(stateNumber, currentTransitionChar, result);
-                nfaWithoutEpsilonTransitions.push_back(transition);
-                cout << "Result: " << stateNumber << "--" << currentTransitionChar << "--" << result << endl;
+                if(results.empty())
+                    continue;
 
-                transition.targetStates.clear();
-                transition.sourceStates.clear();
+                transition.sourceState = stateNumber;
+                transition.transitionChars.push_back(currentTransitionChar);
+                transition.targetStates.insert(transition.targetStates.end(), results.begin(), results.end());
+                transitions.push_back(transition);
+
+                results.clear();
                 transition.transitionChars.clear();
+                transition.targetStates.clear();
             }
-
-            results.clear();
         }
     }
-    exportToFile("results.txt", nfaWithoutEpsilonTransitions);
+
+    exportToFile("results.txt", transitions);
 }
 
  
