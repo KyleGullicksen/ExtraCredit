@@ -13,6 +13,9 @@ using std::string;
 
 class Transition
 {
+private:
+    string transitionCharsToString();
+    string destinations();
 public:
     int sourceState = 0;
     vector<char> transitionChars;
@@ -28,6 +31,7 @@ public:
     virtual void set(int sourceState, const vector<char>& transitionChars, int targetState);
     int getTopTargetState();
     char getTopTransitionChar();
+    string toString();
 };
 
 #endif //EXTRACREDIT_TRANSITION_H

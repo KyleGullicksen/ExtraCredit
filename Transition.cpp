@@ -66,3 +66,38 @@ void Transition::set(int sourceState, vector<int>& targets)
     this->sourceState = sourceState;
     this->targetStates.insert(this->targetStates.end(), targets.begin(), targets.end());
 }
+
+string Transition::toString()
+{
+    string str;
+
+    str.append(std::to_string(sourceState));
+    str.append("--");
+    str.append(transitionCharsToString());
+    str.append("--");
+    str.append(destinations());
+
+    return str;
+}
+
+string Transition::transitionCharsToString()
+{
+    string str;
+
+    for(char c : transitionChars)
+        str.push_back(c);
+
+    return str;
+}
+
+string Transition::destinations()
+{
+    string str;
+
+    for(int i : targetStates) {
+        str.append(std::to_string(i));
+        str.push_back(' ');
+    }
+
+    return str;
+}

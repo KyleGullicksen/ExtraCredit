@@ -13,11 +13,14 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <iostream>
 #include "Transition.h"
 
 using std::vector;
 using std::string;
 using std::ifstream;
+using std::cout;
+using std::endl;
 
 class TransitionTable
 {

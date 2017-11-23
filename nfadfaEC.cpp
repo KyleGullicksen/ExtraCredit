@@ -56,10 +56,20 @@ void buildnfa()
     vector<string> components;
     int currentState = 0;
 
+    cout << "Processing each line" << endl;
+
     for(string currentLine; getline(fin, currentLine);)
     {
         components.clear();
+        transition.transitionChars.clear();
+        transition.targetStates.clear();
+
         split(currentLine, ' ', components);
+
+        cout << "Found these components" << endl;
+        for(string comp : components)
+            cout << "Comp: " << comp << endl;
+        cout << "Done" << endl;
 
         if(components.size() != 4)
         {
@@ -76,7 +86,11 @@ void buildnfa()
             currentState = stoi(components[index]);
             transition.targetStates.push_back(currentState);
         }
+
+        cout << "Transition: " << transition.toString() << endl;
     }
+
+    cout << "Finished processing each line" << endl;
 
     //Populate the transitions table from our transitions list
     nfa.populate(transitions);
@@ -129,6 +143,8 @@ int main()
     {
         currentCompositeState = newCompositeStates.front();
         newCompositeStates.pop();
+
+        cout << "Processing: [" << makeCompositeState(currentCompositeState) << "]" << endl;
 
         for(char alpha : alphas)
         {

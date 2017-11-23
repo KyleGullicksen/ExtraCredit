@@ -40,12 +40,15 @@ void TransitionTable::populate(vector<Transition>& transitions)
     for(Transition transition : transitions)
         for(char transitionChar : transition.transitionChars)
             for(int targetState : transition.targetStates)
+            {
                 table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
+                cout << "Added transition [" << transition.toString() << "] to table"  << endl;
+            }
 }
 
 int TransitionTable::getIndex(char transitionChar)
 {
-    return transitionChar - 'a';
+    return islower(transitionChar) ? transitionChar - 'a' : (transitionChar - 'A') + 26;
 }
 
 int TransitionTable::size()

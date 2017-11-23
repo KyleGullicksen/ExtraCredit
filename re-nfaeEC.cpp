@@ -127,7 +127,6 @@ public:
         //this source contains something not in the other
         //Nothing to be done
 
-
         //Merge matching transitions...
         for(auto firstElement : firstNode.transitions)
         {

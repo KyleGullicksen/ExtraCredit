@@ -41,11 +41,13 @@ void buildnfa()
         string terminatingChar = "-1";
         for(int index = 2; index < whitespaceSplit.size() && whitespaceSplit[index] != terminatingChar; ++index)
             transition.targetStates.push_back(stoi(whitespaceSplit.at(index)));
+
+        cout << "Adding transition: " << transition.toString() << endl;
         transitions.push_back(transition);
     }
     nfa.populate(transitions);
 
-    //Get all the alphas while we have the transitons saved
+    //Get all the alphas while we have the transitions saved
     for(Transition transition1 : transitions)
         for(char transitionChar : transition1.transitionChars)
             alphas.insert(transitionChar);
