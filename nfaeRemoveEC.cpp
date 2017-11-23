@@ -190,6 +190,7 @@ int main()
                 matchesTargetCharPlus(state, EPSILON, results);
             }
 
+            //Add transition
             transition.sourceState = stateNumber;
             transition.transitionChars.push_back(currentTransitionChar);
             transition.targetStates.insert(transition.targetStates.end(), results.begin(), results.end());
