@@ -6,13 +6,17 @@
 
 
 Transition::Transition(int sourceState, const vector<char>& transitionChars, int targetState)
-        :sourceState(sourceState), transitionChars(transitionChars), targetState(targetState)
-{ }
+        :sourceState(sourceState), transitionChars(transitionChars)
+{
+    targetStates.push_back(targetState);
+}
 
-Transition::Transition(int sourceState, const string& transitionChars, int targetState) : sourceState(sourceState), targetState(targetState)
+Transition::Transition(int sourceState, const string& transitionChars, int targetState) : sourceState(sourceState)
 {
     for(char ch : transitionChars)
         this->transitionChars.push_back(ch);
+
+    targetStates.push_back(targetState);
 }
 
 void Transition::setTransitions(string transitionsString)

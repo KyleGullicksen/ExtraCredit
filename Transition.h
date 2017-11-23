@@ -17,6 +17,7 @@ public:
     int sourceState = 0;
     vector<char> transitionChars;
     vector<int> targetStates;
+    Transition() = default;
     Transition(int sourceState, const vector<char>& transitionChars, int targetState);
     Transition(int sourceState, const string & transitionChars, int targetState);
 
