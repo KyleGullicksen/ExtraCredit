@@ -97,7 +97,7 @@ void exportToFile(const char* filename, vector<Transition>& transitions)
     results.close();
 }
 
-vector<int>& matchesTargetCharStar(int currentState, char targetChar, vector<int> &results)
+vector<int>& matchesTargetCharPlus(int currentState, char targetChar, vector<int> &results)
 {
     vector<int>* targetTransitions = nfa.getTransitions(currentState, targetChar);
 
@@ -105,7 +105,7 @@ vector<int>& matchesTargetCharStar(int currentState, char targetChar, vector<int
         for(int stateNumber : *targetTransitions)
         {
             results.push_back(stateNumber);
-            matchesTargetCharStar(stateNumber, EPSILON, results);
+            matchesTargetCharPlus(stateNumber, EPSILON, results);
         }
     }
     else
@@ -114,7 +114,7 @@ vector<int>& matchesTargetCharStar(int currentState, char targetChar, vector<int
     return results;
 }
 
-void matchesTargetFollowedByEpsilonStar(int currentStateNumber, char targetChar, vector<int> & results)
+void matchesTargetFollowedByEpsilonPlus(int currentStateNumber, char targetChar, vector<int> &results)
 {
     vector<int> * targetTransitions = nfa.getTransitions(currentStateNumber, targetChar);
 
@@ -122,7 +122,7 @@ void matchesTargetFollowedByEpsilonStar(int currentStateNumber, char targetChar,
         for(int state : *targetTransitions)
         {
             results.push_back(state);
-            matchesTargetCharStar(state, EPSILON, results);
+            matchesTargetCharPlus(state, EPSILON, results);
         }
 }
 
@@ -146,7 +146,7 @@ int main()
     for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
     {
         currentEpsilonTransitions.clear();
-        matchesTargetCharStar(stateNumber, EPSILON, currentEpsilonTransitions);
+        matchesTargetCharPlus(stateNumber, EPSILON, currentEpsilonTransitions);
         epsilonTransitions.push_back(currentEpsilonTransitions);
     }
 
@@ -155,13 +155,14 @@ int main()
     vector<Transition> transitions;
     Transition transition;
 
+    //Add e^+<alpha>e^*
     for(int stateNumber = 0; stateNumber < maxState; stateNumber++)
     {
         for(char currentTransitionChar : alphas)
         {
             for(int epsilonState : epsilonTransitions[stateNumber])
             {
-                matchesTargetFollowedByEpsilonStar(epsilonState, currentTransitionChar, results);
+                matchesTargetFollowedByEpsilonPlus(epsilonState, currentTransitionChar, results);
 
                 if(results.empty())
                     continue;
@@ -175,6 +176,28 @@ int main()
                 transition.transitionChars.clear();
                 transition.targetStates.clear();
             }
+
+            //Does this state number border a target?
+            vector<int> * targetTransitions = nfa.getTransitions(stateNumber, currentTransitionChar);
+
+            if(targetTransitions == nullptr || targetTransitions->empty())
+                continue;
+
+            results.clear();
+            for(int state : *targetTransitions)
+            {
+                results.push_back(state);
+                matchesTargetCharPlus(state, EPSILON, results);
+            }
+
+            transition.sourceState = stateNumber;
+            transition.transitionChars.push_back(currentTransitionChar);
+            transition.targetStates.insert(transition.targetStates.end(), results.begin(), results.end());
+            transitions.push_back(transition);
+
+            results.clear();
+            transition.transitionChars.clear();
+            transition.targetStates.clear();
         }
     }
 
