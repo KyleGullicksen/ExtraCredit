@@ -68,6 +68,9 @@ vector<int>& addTransitionsFromMatchingTargetChar(int currentState, char targetC
 
 void exportToFile(const char* filename, vector<Transition>& transitions)
 {
+    cout << "Any transitions?" << endl;
+    cout << "Count: " << transitions.size() << endl;
+
     //If we've already exported our results before, delete them
     remove(filename);
 
@@ -92,6 +95,8 @@ void exportToFile(const char* filename, vector<Transition>& transitions)
 
         //Done
     }
+
+    results.close();
 }
 
 int main()
@@ -122,7 +127,7 @@ int main()
     {
         for(char currentTransitionChar : alphas)
         {
-            currentEpsilonTransitionState = &epsilonTransitions[stateNumber];
+            currentEpsilonTransitionState = &(epsilonTransitions[stateNumber]);
             for(int epsilonState : *currentEpsilonTransitionState)
                 addTransitionsFromMatchingTargetChar(epsilonState, currentTransitionChar, results);
 
