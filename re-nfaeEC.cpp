@@ -9,7 +9,7 @@ using namespace std;
 
 #define NO_TRANSITION '*'
 #define NO_STATE -1
-#define EPSILON 'e'
+#define EPSILON ' '
 
 int stateNumberCounter = 0;
 
@@ -76,7 +76,19 @@ protected:
     int end = 0;
 
     unordered_map<int, Node> nodes;
+    string command;
 public:
+    virtual void setCommand(const string &command)
+    {
+        Machine::command = command;
+    }
+
+    virtual void setCommand(const char A)
+    {
+        command = "";
+        command.push_back(A);
+    }
+
     void add(Node & node)
     {
         //new start?
@@ -416,7 +428,7 @@ int nextStateNumber()
 }
 
 
-void processConcat()
+void processConcat(char i)
 {
     int M1, M2;
     cout << "Enter number of the first machine:";
@@ -425,6 +437,7 @@ void processConcat()
     cin >> M2;
 
     Machine result;
+    result.setCommand(i);
 
     if(M1 == M2)
     {
@@ -450,7 +463,7 @@ void processConcat()
 
 
 //Good
-void processOr()
+void processOr(char i)
 {
     int M1, M2;
     cout << "Enter number of the first machine:";
@@ -467,6 +480,7 @@ void processOr()
     Machine & secondMachine = machines[M2];
 
     Machine newMachine;
+    newMachine.setCommand(i);
 
     //Make the newMachine the same as the first machine
     Machine::append(firstMachine, newMachine, newMachine);
@@ -479,7 +493,7 @@ void processOr()
 }
 
 //Good
-void processStar()
+void processStar(char i)
 {
     int M1;
     cout << "Enter number of the machine:";
@@ -487,6 +501,7 @@ void processStar()
 
     Machine & machine = machines.at(M1);
     Machine newMachine;
+    newMachine.setCommand(i);
     Machine::append(machine, newMachine, newMachine);
 
     newMachine.newStart(EPSILON);
@@ -504,13 +519,14 @@ void processStar()
 }
 
 //Good
-void processPlus()
+void processPlus(char i)
 {
     int M1;
     cout << "Enter number of the machine:";
     cin >> M1;
     Machine& machine = machines.at(M1);
     Machine newMachine;
+    newMachine.setCommand(i);
     Machine::append(machine, newMachine, newMachine);
 
     newMachine.newStart(EPSILON);
@@ -522,30 +538,57 @@ void processPlus()
     machines.push_back(newMachine);
 }
 
+/*
+ * Format:
+ * Machine0 for a
+   0---a---1
+   Initial=0
+   Final=1
+================================
+
+ */
+
 void exportToFile()
 {
+    const char* file = "reToNFAEOutput.txt";
+    remove(file);
+    ofstream output(file, ios::out);
+
     Node currentNode;
-    ofstream output("reToNFAEOutput.txt", ios::out);
     Transition transition;
 
-    for(Machine machine : machines)
+    for(int index = 0; index < machines.size(); ++index)
     {
-        //Export each machine to file...
+        output << "Machine" << index << " for a";
+        cout << "Machine" << index << " for a";
 
-        //Format: <source> <transition chars> <destination> newline
-        machine.visit([&](Node node) ->void {
+        //Output the transitions on a single line
+        machines[index].visit([&](Node & node) -> void {
             for(auto transitionElement : node.transitions)
             {
                 transition = transitionElement.second;
 
-                output << node.number;
-                output << " ";
-                output << setToString(transition.acceptedChars);
-                output << " ";
-                output << transition.destination;
-                output << "\n";
+                output << transition.source << "--";
+                cout << transition.source << "--";
+                for(char c : transition.acceptedChars)
+                {
+                    output << c;
+                    cout << c;
+                }
+                output << "--" << transition.destination << " ";
+                cout << "--" << transition.destination << " ";
             }
+            output << "\n";
+            cout << "\n";
         });
+
+        output << "Initial=" << machines[index].getStartNumber() << "\n";
+        output << "Final=" << machines[index].getEndNumber() << "\n";
+        output << "================================\n";
+        cout << "Initial=" << machines[index].getStartNumber() << "\n";
+        cout << "Final=" << machines[index].getEndNumber() << "\n";
+        cout << "================================\n";
+
     }
 
     output.close();
@@ -596,13 +639,12 @@ int main()
         cout << "- for appending two machines" << endl;
         cout << "n to quit" << endl;
         cin >> A;
-        if(A == '*') processStar();
-        else if(A == '+') processPlus();
-        else if(A == '|') processOr();
-        else if(A == '-') processConcat();
+        if(A == '*') processStar(A);
+        else if(A == '+') processPlus(A);
+        else if(A == '|') processOr(A);
+        else if(A == '-') processConcat(A);
     }
     cout << "Outputting all machines to nfa-e.txt... " << endl;
-    ofstream fout("nfa-e.txt", ios::out);
     // send all NFA contents to the output file
 
     exportToFile();
