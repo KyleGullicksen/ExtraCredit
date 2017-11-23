@@ -27,9 +27,13 @@ void buildnfa()
     vector<Transition> transitions;
     for(string currentLine; getline(input, currentLine);)
     {
+        cout << "CurrentLine: " << currentLine << endl;
         whitespaceSplit.clear();
+        transition.transitionChars.clear();
+        transition.targetStates.clear();
         Utilities::split(currentLine, ' ', whitespaceSplit);
-        if(whitespaceSplit.size() < 4)
+
+        if(whitespaceSplit.size() < 3)
         {
             cout << "Line [" << currentLine << "] was malformed. Skipping." << endl;
             continue;
@@ -42,18 +46,28 @@ void buildnfa()
         for(int index = 2; index < whitespaceSplit.size() && whitespaceSplit[index] != terminatingChar; ++index)
             transition.targetStates.push_back(stoi(whitespaceSplit.at(index)));
 
-        cout << "Adding transition: " << transition.toString() << endl;
         transitions.push_back(transition);
     }
     nfa.populate(transitions);
 
     //Get all the alphas while we have the transitions saved
-    for(Transition transition1 : transitions)
-        for(char transitionChar : transition1.transitionChars)
-            alphas.insert(transitionChar);
+    for(Transition transition : transitions)
+        for(char transitionChar : transition.transitionChars)
+            if(transitionChar != 'e')
+                alphas.insert(transitionChar);
 
     //set the maxState
-    maxState = nfa.getMaxState();
+    maxState = -1;
+    for(Transition transition : transitions)
+    {
+        if(transition.sourceState > maxState)
+            maxState = transition.sourceState;
+
+        for(int i : transition.targetStates)
+            if(i > maxState)
+                maxState = i;
+    }
+    maxState++;
 }
 
 vector<int>& addTransitionsFromMatchingTargetChar(int currentState, char targetChar, vector<int>& results)
@@ -70,9 +84,6 @@ vector<int>& addTransitionsFromMatchingTargetChar(int currentState, char targetC
 
 void exportToFile(const char* filename, vector<Transition>& transitions)
 {
-    cout << "Any transitions?" << endl;
-    cout << "Count: " << transitions.size() << endl;
-
     //If we've already exported our results before, delete them
     remove(filename);
 
@@ -87,15 +98,11 @@ void exportToFile(const char* filename, vector<Transition>& transitions)
         results << " ";
         for(int targetState : transition.targetStates)
         {
-            results << " ";
             results << targetState;
             results << " ";
         }
-
-        //Write the EOL marker
-        results << -1;
-
         //Done
+        results << "\n";
     }
 
     results.close();
@@ -105,11 +112,8 @@ int main()
 {
     char a;
     buildnfa();
-    unordered_set<char> alphas;
     vector<vector<int>> epsilonTransitions;
     vector<int> currentEpsilonTransitions;
-    epsilonTransitions.resize(maxState);
-    vector<int>* epsilonTransitonsForCurrentState;
 
     //Get the epsilon transitions for all of them
     for(int stateNumber = 0; stateNumber < maxState; ++stateNumber)
@@ -123,22 +127,30 @@ int main()
     //Calculate e*<target transition> e* for all states...
     vector<Transition> nfaWithoutEpsilonTransitions;
     Transition transition;
-    vector<int>* currentEpsilonTransitionState = nullptr;
     vector<int> results;
     for(int stateNumber = 0; stateNumber < maxState; stateNumber++)
     {
         for(char currentTransitionChar : alphas)
         {
-            currentEpsilonTransitionState = &(epsilonTransitions[stateNumber]);
-            for(int epsilonState : *currentEpsilonTransitionState)
+            for(int epsilonState : epsilonTransitions[stateNumber])
+            {
+                cout << "Looking for matching transitions for: " << epsilonState << " with char: " << currentTransitionChar << endl;
                 addTransitionsFromMatchingTargetChar(epsilonState, currentTransitionChar, results);
+            }
 
             //Add the transitions
             for(int result : results)
             {
                 transition.set(stateNumber, currentTransitionChar, result);
                 nfaWithoutEpsilonTransitions.push_back(transition);
+                cout << "Result: " << stateNumber << "--" << currentTransitionChar << "--" << result << endl;
+
+                transition.targetStates.clear();
+                transition.sourceStates.clear();
+                transition.transitionChars.clear();
             }
+
+            results.clear();
         }
     }
     exportToFile("results.txt", nfaWithoutEpsilonTransitions);
