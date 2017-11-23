@@ -14,6 +14,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <climits>
 #include "Transition.h"
 
 using std::vector;

@@ -23,24 +23,35 @@ void TransitionTable::populate(vector<Transition>& transitions)
         return;
 
     //Find the max source state number
-    int maxSourceState = -1;
+    int maxSourceState = INT_MIN;
     for(Transition transition : transitions)
         if(transition.sourceState > maxSourceState)
             maxSourceState = transition.sourceState;
 
-    //Populate the source state #
-    table.resize(maxSourceState);
+    cout << "maxSourceState: " << maxSourceState << endl;
+
     maxState = maxSourceState;
 
-    //Each transition char vector has a fixed size of 52 (26 for the lower case letters, 26 for the uppers]
-    for(int index = 0; index < maxSourceState; ++index)
-        table[index].resize(NUMBER_OF_TRANSITION_CHARS);
+    vector<int> destinations;
+    vector<vector<int>> emptyTransitions;
+
+    for(int index = 0; index < NUMBER_OF_TRANSITION_CHARS; ++index)
+        emptyTransitions.push_back(destinations);
+
+    //Add an empty table entry for items [0, maxState]
+    for(int index = 0; index <= maxSourceState; ++index)
+        table.push_back(emptyTransitions);
+
+//    //Each transition char vector has a fixed size of 52 (26 for the lower case letters, 26 for the uppers]
+//    for(int index = 0; index < maxSourceState; ++index)
+//        table[index].resize(NUMBER_OF_TRANSITION_CHARS);
 
     //Populate the table from the given transitions
     for(Transition transition : transitions)
         for(char transitionChar : transition.transitionChars)
             for(int targetState : transition.targetStates)
             {
+                cout << "Requesting: Target State:  " << targetState << ", Source State: " << transition.sourceState << endl;
                 table[transition.sourceState][getIndex(transitionChar)].push_back(targetState);
                 cout << "Added transition [" << transition.toString() << "] to table"  << endl;
             }

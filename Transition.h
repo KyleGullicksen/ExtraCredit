@@ -18,6 +18,7 @@ private:
     string destinations();
 public:
     int sourceState = 0;
+    vector<int> sourceStates;
     vector<char> transitionChars;
     vector<int> targetStates;
     Transition() = default;

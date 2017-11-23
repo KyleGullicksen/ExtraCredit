@@ -12,8 +12,6 @@ using Utilities::split;
 
 #define LINE_END_MARKER = -1
 
-ofstream fout("dfa.txt", ios::out);
-
 TransitionTable dfa;
 TransitionTable nfa;
 unordered_set<char> alphas;
@@ -23,9 +21,16 @@ int maxState;  // the highest state indicated in nfa.txt first line
 string makeCompositeState(vector<int> & states)
 {
     string state = "";
+    bool isFirst = true;
 
     for(int stateNum : states)
+    {
+        if(!isFirst)
+            state.push_back(' ');
+
+        isFirst = false;
         state.append(std::to_string(stateNum));
+    }
 
     return state;
 }
@@ -88,6 +93,7 @@ void buildnfa()
         }
 
         cout << "Transition: " << transition.toString() << endl;
+        transitions.push_back(transition);
     }
 
     cout << "Finished processing each line" << endl;
@@ -133,6 +139,7 @@ int main()
     unordered_set<string> seenStates;
     string compositeStateStr = "";
     Transition newDFATransition;
+    vector<Transition> dfaTransitions;
 
     //Add the starting state
     vector<int> startingState;
@@ -165,14 +172,52 @@ int main()
 
             compositeStateStr = makeCompositeState(newCompositeState);
 
-            if(seenStates.find(compositeStateStr) != seenStates.end())
+            if(compositeStateStr.empty() || (seenStates.find(compositeStateStr) != seenStates.end()))
                 continue;
 
             newCompositeStates.push(newCompositeState);
+            cout << "Pushing: " << compositeStateStr << endl;
 
-            //Add a new transition to the DFA [might need to refactor the Transition class]
-            //newDFATransition.
+            seenStates.insert(compositeStateStr);
+
+            if(currentCompositeState.size() == 1)
+                newDFATransition.sourceState = currentCompositeState[0];
+            newDFATransition.sourceStates.insert(newDFATransition.sourceStates.end(), currentCompositeState.begin(), currentCompositeState.end());
+
+            newDFATransition.transitionChars.push_back(alpha);
+            newDFATransition.targetStates.insert(newDFATransition.targetStates.end(), newCompositeState.begin(), newCompositeState.end());
+
+            dfaTransitions.push_back(newDFATransition);
+
+            //clear the new DFA transition
+            newDFATransition.sourceState = 0;
+            newDFATransition.sourceStates.clear();
+            newDFATransition.transitionChars.clear();
+            newDFATransition.targetStates.clear();
         }
+    }
+
+    dfa.populate(dfaTransitions);
+
+    remove("dfa.txt");
+    ofstream fout("dfa.txt", ios::out);
+
+    //Export the DFA to file
+    //From <01> on a goes to <01>
+    for(Transition dfaTrans : dfaTransitions)
+    {
+        fout << "From <";
+        for(int i : dfaTrans.sourceStates)
+            fout << i;
+        fout << "> ";
+
+        fout << "on ";
+        for(char c : dfaTrans.transitionChars)
+            fout << c;
+        fout << " goes to <";
+        for(int i : dfaTrans.targetStates)
+            fout << i;
+        fout << ">\n";
     }
 
     fout << "Any state with the original final state number is final" << endl;
